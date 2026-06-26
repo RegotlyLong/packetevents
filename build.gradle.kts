@@ -62,6 +62,7 @@ tasks {
     defaultTasks("build")
 }
 
+
 allprojects {
     tasks.withType<Javadoc> {
         enabled = false
