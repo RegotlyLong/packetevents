@@ -181,7 +181,7 @@ public class WrappedBlockState {
         if (!BY_ID[mappingsIndex].isEmpty()) {
             return; // already loaded
         }
-        PacketEvents.getAPI().getLogManager().info("Loading block mappings for " + version + "/" + mappingsIndex + "...");
+        //PacketEvents.getAPI().getLogManager().info("Loading block mappings for " + version + "/" + mappingsIndex + "...");
         long start = System.nanoTime();
 
         if (mappingsIndex == LEGACY_MAPPING_INDEX) {
@@ -191,8 +191,8 @@ public class WrappedBlockState {
         }
 
         double timeDiff = (System.nanoTime() - start) / 1_000_000d;
-        PacketEvents.getAPI().getLogManager().info("Finished loading block mappings for "
-                + version + "/" + mappingsIndex + " in " + timeDiff + "ms");
+        //PacketEvents.getAPI().getLogManager().info("Finished loading block mappings for "
+       //         + version + "/" + mappingsIndex + " in " + timeDiff + "ms");
     }
 
     private static Map<Map<StateValue, Object>, StateCacheValue> buildStateDataCache() {

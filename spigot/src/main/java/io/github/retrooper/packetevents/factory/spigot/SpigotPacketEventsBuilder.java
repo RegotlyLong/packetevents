@@ -128,7 +128,7 @@ public class SpigotPacketEventsBuilder {
 
                     loaded = true;
 
-                    this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW + ("packetevents".equals(id) ? "" : " for " + plugin.getName()));
+                   // this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW + ("packetevents".equals(id) ? "" : " for " + plugin.getName()));
                 }
             }
 

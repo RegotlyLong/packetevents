@@ -189,7 +189,7 @@ public class BungeePacketEventsBuilder {
                     injector.inject();
                     loaded = true;
 
-                    this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW + ("packetevents".equals(id) ? "" : " for " + id));
+                  //  this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW + ("packetevents".equals(id) ? "" : " for " + id));
                 }
             }
 

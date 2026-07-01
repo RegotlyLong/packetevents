@@ -56,6 +56,6 @@ public class SpongeLogManager extends LogManager {
     public void log(Level level, ComponentLike component, @Nullable Throwable error) {
         String plainMessage = AdventureSerializer.stringify(component);
         org.apache.logging.log4j.Level log4jLevel = LEVEL_CONVERSION.getOrDefault(level, org.apache.logging.log4j.Level.INFO);
-        logger.log(log4jLevel, isPacketEvents ? plainMessage : "[packetevents] " + plainMessage, error);
+        logger.log(log4jLevel, isPacketEvents ? plainMessage : "[Spiter] " + plainMessage, error);
     }
 }

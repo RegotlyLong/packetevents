@@ -100,7 +100,7 @@ public class NettyPacketEventsBuilder {
                     injector.inject();
                     loaded = true;
 
-                    this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW + ("packetevents".equals(id) ? "" : " for " + data.getName()));
+                 //   this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW + ("packetevents".equals(id) ? "" : " for " + data.getName()));
                 }
             }
 

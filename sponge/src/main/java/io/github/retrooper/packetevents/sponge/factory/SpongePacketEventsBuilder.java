@@ -113,7 +113,7 @@ public class SpongePacketEventsBuilder {
 
                 loaded = true;
 
-                this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW + ("packetevents".equals(id) ? "" : " for " + plugin.metadata().id()));
+            //    this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW + ("packetevents".equals(id) ? "" : " for " + plugin.metadata().id()));
             }
 
             @Override

@@ -88,7 +88,7 @@ public class FabricPacketEventsAPI extends PacketEventsAPI<ModInitializer> {
         super.load();
         this.loaded = true;
 
-        this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW);
+      //  this.getLogManager().info("Loaded packetevents v" + PEVersions.RAW);
     }
 
     @Override
