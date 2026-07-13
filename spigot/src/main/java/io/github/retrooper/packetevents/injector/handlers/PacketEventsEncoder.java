@@ -248,27 +248,24 @@ public class PacketEventsEncoder extends ChannelOutboundHandlerAdapter {
 
     private boolean handleCompression(ChannelHandlerContext ctx, ByteBuf buffer) throws InvocationTargetException {
         if (handledCompression) return false;
+        if (ctx.pipeline().get("compress") == null) return false;
         int compressIndex = ctx.pipeline().names().indexOf("compress");
         if (compressIndex == -1) return false;
+
         handledCompression = true;
         int peEncoderIndex = ctx.pipeline().names().indexOf((preVia ? "pre-" : "") + PacketEvents.ENCODER_NAME);
         if (peEncoderIndex == -1) return false;
 
-        if (compressIndex <= peEncoderIndex) return false; // We are fine, no need to relocate
-
-        //We are ahead of the decompression handler (they are added dynamically) so let us relocate.
-        //But first we need to compress the data and re-compress it after we do all our processing to avoid issues
+        if (compressIndex <= peEncoderIndex) return false;
 
         boolean decompress = false;
 
-        // We don't need to handle decompression if the client is 1.7 or older
         if (!preVia ||
-            !user.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_7_10)) {
+                !user.getClientVersion().isOlderThanOrEquals(ClientVersion.V_1_7_10)) {
             decompress(ctx, buffer, buffer);
             decompress = true;
         }
 
-        //Let us relocate and no longer deal with compression.
         ServerConnectionInitializer.relocateHandlers(ctx.channel(), user, preVia, false);
         return decompress;
     }

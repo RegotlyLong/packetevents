@@ -65,13 +65,16 @@ public class PacketEventsDecoder extends MessageToMessageDecoder<ByteBuf> {
             }
 
             PacketEventsImplHelper.handleServerBoundPacket(ctx.channel(), user, player, input, !preViaVersion);
-            out.add(ByteBufHelper.retain(input));
+            out.add(input.retain());
         } catch (Throwable e) {
             // We must be sure all the exceptions caused by our handlers are PacketProcessExceptions
             // In the case we have thrown an exception that is not a PacketProcessException, let's wrap it in order to
             // allow exceptionCaught to handle it properly
+            if (e instanceof Error) {
+                throw (Error) e;
+            }
             if (ExceptionUtil.isException(e, PacketProcessException.class)) {
-                throw e;
+                throw (Exception) e; // 直接强转抛出
             } else {
                 throw new PacketProcessException(e);
             }
@@ -96,20 +99,19 @@ public class PacketEventsDecoder extends MessageToMessageDecoder<ByteBuf> {
         boolean debug = PacketEvents.getAPI().getSettings().isDebugEnabled() || SpigotReflectionUtil.isMinecraftServerInstanceDebugging();
         ConnectionState decoderState = user == null ? null
                 : (preViaVersion ? user.getPreViaDecoderState() : user.getPostViaDecoderState());
-        // We log exceptions only if the server is in debug mode or the player is fully connected to the server.
+
         if (debug || (user != null && decoderState != ConnectionState.HANDSHAKING)) {
             if (PacketEvents.getAPI().getSettings().isFullStackTraceEnabled()) {
                 String state = decoderState != null ? decoderState.name() : "null";
                 String clientVersion = user != null ? user.getClientVersion().getReleaseName() : "null";
-                String username = user != null && user.getProfile().getName() != null ? user.getProfile().getName() : player != null ? player.getName() : "null";
+                String username = user != null && user.getProfile().getName() != null ? user.getProfile().getName() : (player != null ? player.getName() : "null");
+                String serverVersion = PacketEvents.getAPI().getServerManager().getVersion().getReleaseName();
 
-                PacketEvents.getAPI().getLogManager().warn("An error occurred while processing a packet from "
-                        + user.getProfile().getName() +
-                        " (state: " + state +
-                        ", clientVersion: " + clientVersion +
-                        ", serverVersion: " + PacketEvents.getAPI().getServerManager().getVersion().getReleaseName() +
-                        ", preVia: " + preViaVersion +
-                        ")", cause);
+                String message = String.format(
+                        "An error occurred while processing a packet from %s (state: %s, clientVersion: %s, serverVersion: %s, preVia: %b)",
+                        username, state, clientVersion, serverVersion, preViaVersion
+                );
+                PacketEvents.getAPI().getLogManager().warn(message, cause);
             } else {
                 PacketEvents.getAPI().getLogManager().warn(cause.getMessage());
             }

@@ -27,6 +27,7 @@ import com.github.retrooper.packetevents.manager.protocol.ProtocolManager;
 import com.github.retrooper.packetevents.netty.buffer.ByteBufHelper;
 import com.github.retrooper.packetevents.protocol.PacketSide;
 import com.github.retrooper.packetevents.protocol.player.User;
+import io.netty.buffer.ByteBuf;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -51,31 +52,36 @@ public final class PacketEventsImplHelper {
             Object channel, User user, Object player, Object buffer,
             boolean autoProtocolTranslation
     ) throws Exception {
-        if (!ByteBufHelper.isReadable(buffer)) {
+        if (!(buffer instanceof ByteBuf)) return null;
+        ByteBuf buf = (ByteBuf) buffer;
+
+        if (!buf.isReadable()) {
             return null;
         }
 
-        int preProcessIndex = ByteBufHelper.readerIndex(buffer);
+        int preProcessIndex = buf.readerIndex();
         PacketSendEvent packetSendEvent = EventCreationUtil.createSendEvent(channel, user, player, buffer, autoProtocolTranslation);
-        int processIndex = ByteBufHelper.readerIndex(buffer);
+        int processIndex = buf.readerIndex();
+
         PacketEvents.getAPI().getEventManager().callEvent(packetSendEvent, () -> {
-            ByteBufHelper.readerIndex(buffer, processIndex);
+            buf.readerIndex(processIndex);
         }, !autoProtocolTranslation);
+
         if (!packetSendEvent.isCancelled()) {
             //Did they ever use a wrapper?
             if (packetSendEvent.getLastUsedWrapper() != null) {
                 //Rewrite the buffer
-                ByteBufHelper.clear(buffer);
+                buf.clear();
                 packetSendEvent.getLastUsedWrapper().writeVarInt(packetSendEvent.getPacketId());
                 packetSendEvent.getLastUsedWrapper().write();
             } else {
                 //If no wrappers were used, just pass on the original buffer.
                 //Correct the reader index, basically what the next handler is expecting.
-                ByteBufHelper.readerIndex(buffer, preProcessIndex);
+                buf.readerIndex(preProcessIndex);
             }
         } else {
             //Make the buffer unreadable for the next handlers
-            ByteBufHelper.clear(buffer);
+            buf.clear();
         }
 
         if (packetSendEvent.hasPostTasks()) {
@@ -91,31 +97,38 @@ public final class PacketEventsImplHelper {
             Object channel, User user, Object player, Object buffer,
             boolean autoProtocolTranslation
     ) throws Exception {
-        if (!ByteBufHelper.isReadable(buffer)) {
+        if (!(buffer instanceof ByteBuf)) return null;
+        ByteBuf buf = (ByteBuf) buffer;
+
+        if (!buf.isReadable()) {
             return null;
         }
 
-        int preProcessIndex = ByteBufHelper.readerIndex(buffer);
+        int preProcessIndex = buf.readerIndex();
+
         PacketReceiveEvent packetReceiveEvent = EventCreationUtil.createReceiveEvent(channel, user, player, buffer, autoProtocolTranslation);
-        int processIndex = ByteBufHelper.readerIndex(buffer);
+        int processIndex = buf.readerIndex();
+
         PacketEvents.getAPI().getEventManager().callEvent(packetReceiveEvent, () -> {
-            ByteBufHelper.readerIndex(buffer, processIndex);
+            buf.readerIndex(processIndex);
         }, !autoProtocolTranslation);
+
+
         if (!packetReceiveEvent.isCancelled()) {
             //Did they ever use a wrapper?
             if (packetReceiveEvent.getLastUsedWrapper() != null) {
                 //Rewrite the buffer
-                ByteBufHelper.clear(buffer);
+                buf.clear();
                 packetReceiveEvent.getLastUsedWrapper().writeVarInt(packetReceiveEvent.getPacketId());
                 packetReceiveEvent.getLastUsedWrapper().write();
             } else {
                 //If no wrappers were used, just pass on the original buffer.
                 //Correct the reader index, basically what the next handler is expecting.
-                ByteBufHelper.readerIndex(buffer, preProcessIndex);
+                buf.readerIndex(preProcessIndex);
             }
         } else {
             //Cancelling the packet, lets clear the buffer
-            ByteBufHelper.clear(buffer);
+            buf.clear();
         }
         if (packetReceiveEvent.hasPostTasks()) {
             for (Runnable task : packetReceiveEvent.getPostTasks()) {
