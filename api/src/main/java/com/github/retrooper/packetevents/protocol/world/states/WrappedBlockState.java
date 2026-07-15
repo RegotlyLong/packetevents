@@ -68,6 +68,7 @@ import static com.github.retrooper.packetevents.util.adventure.AdventureIndexUti
  * Mappings from modern versions are from ViaVersion, who have a similar (but a bit slower) system.
  */
 public class WrappedBlockState {
+    private static WrappedBlockState[] GLOBAL_ID_CACHE = new WrappedBlockState[50000];
 
     // all versions where block state mappings were changed TODO UPDATE
     private static final ClientVersion[] MAPPING_VERSION_STEPS = new ClientVersion[]{
@@ -133,6 +134,8 @@ public class WrappedBlockState {
         INTO_STRING[AIR_MAPPING_INDEX] = Collections.singletonMap(AIR, airName);
         INTO_ID[AIR_MAPPING_INDEX] = Collections.singletonMap(AIR, AIR.getGlobalId());
         DEFAULT_STATES[AIR_MAPPING_INDEX] = Collections.singletonMap(AIR.getType(), AIR);
+
+        GLOBAL_ID_CACHE[0] = AIR;
     }
 
     int globalID;
@@ -300,13 +303,45 @@ public class WrappedBlockState {
         return getByGlobalId(version, globalID, true);
     }
 
-    @NotNull
+   /* @NotNull
     public static WrappedBlockState getByGlobalId(ClientVersion version, int globalID, boolean clone) {
         if (globalID == 0) return AIR; // Hardcode for performance
         byte mappingsIndex = loadMappings(version);
         final WrappedBlockState state = BY_ID[mappingsIndex].getOrDefault(globalID, AIR);
         return clone ? state.clone() : state;
     }
+*/
+
+    @NotNull
+    public static WrappedBlockState getByGlobalId(ClientVersion version, int globalID, boolean clone) {
+        if (globalID == 0) return AIR; // Hardcode for performance
+
+        if (globalID > 0 && globalID < GLOBAL_ID_CACHE.length) {
+            WrappedBlockState cachedState = GLOBAL_ID_CACHE[globalID];
+            if (cachedState != null) {
+                return clone ? cachedState.clone() : cachedState;
+            }
+        }
+
+        byte mappingsIndex = loadMappings(version);
+        final WrappedBlockState state = BY_ID[mappingsIndex].getOrDefault(globalID, AIR);
+
+        if (globalID > 0 && globalID < GLOBAL_ID_CACHE.length && state != AIR) {
+            GLOBAL_ID_CACHE[globalID] = state;
+        } else if (globalID >= GLOBAL_ID_CACHE.length && state != AIR) {
+            synchronized (WrappedBlockState.class) {
+                if (globalID >= GLOBAL_ID_CACHE.length) {
+                    WrappedBlockState[] newArray = new WrappedBlockState[globalID + 5000];
+                    System.arraycopy(GLOBAL_ID_CACHE, 0, newArray, 0, GLOBAL_ID_CACHE.length);
+                    System.arraycopy(newArray, 0, GLOBAL_ID_CACHE, 0, GLOBAL_ID_CACHE.length);
+                }
+            }
+            GLOBAL_ID_CACHE[globalID] = state;
+        }
+
+        return clone ? state.clone() : state;
+    }
+
 
     @NotNull
     public static WrappedBlockState getByString(String string) {
