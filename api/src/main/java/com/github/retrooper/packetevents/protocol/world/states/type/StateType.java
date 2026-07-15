@@ -28,8 +28,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class StateType {
+
+    private static final AtomicInteger MAPPINGS = new AtomicInteger(0);
+    private final int id;
+
 
     private final Mapped mapped;
 
@@ -50,6 +55,7 @@ public class StateType {
             boolean isBlocking, boolean isAir, boolean requiresCorrectTool,
             boolean isShapeExceedsCube, MaterialType materialType
     ) {
+        this.id = MAPPINGS.getAndIncrement();
         this.mapped = new Mapped(typeData);
         this.blastResistance = blastResistance;
         this.hardness = hardness;
@@ -152,6 +158,10 @@ public class StateType {
     public int hashCode() {
         return Objects.hash(getName(), blastResistance, hardness, isSolid, isBlocking, isAir, requiresCorrectTool, exceedsCube, materialType);
     }*/
+
+    public int getId() {
+        return this.id;
+    }
 
     @Override
     public int hashCode() {

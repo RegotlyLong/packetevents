@@ -1055,6 +1055,8 @@ public class BlockTags {
     Set<StateType> states = new HashSet<>(); // o(1)
     boolean reallyEmpty;
 
+    private boolean[] statesArray = new boolean[0];
+
     public BlockTags(final String name) {
         byName.put(name, this);
         this.name = new TagKey(new ResourceLocation(name));
@@ -1064,30 +1066,79 @@ public class BlockTags {
         return new BlockTags(s);
     }
 
-    private static void copy(@Nullable BlockTags src, BlockTags dst) {
+
+    private void markState(StateType state) {
+        int id = state.getId();
+        if (id >= statesArray.length) {
+            boolean[] newArray = new boolean[Math.max(statesArray.length * 2, id + 16)];
+            System.arraycopy(statesArray, 0, newArray, 0, statesArray.length);
+            statesArray = newArray;
+        }
+        statesArray[id] = true;
+    }
+
+
+   /* private static void copy(@Nullable BlockTags src, BlockTags dst) {
         if (src != null) {
             dst.states.addAll(src.states);
         } else {
             dst.reallyEmpty = true;
         }
+    }*/
+
+    private static void copy(@Nullable BlockTags src, BlockTags dst) {
+        if (src != null) {
+            dst.states.addAll(src.states);
+            for (StateType state : src.states) {
+                dst.markState(state);
+            }
+        } else {
+            dst.reallyEmpty = true;
+        }
     }
 
-    private BlockTags add(StateType... state) {
+   /* private BlockTags add(StateType... state) {
         Collections.addAll(this.states, state);
         return this;
     }
+*/
+   private BlockTags add(StateType... state) {
+       Collections.addAll(this.states, state);
+       for (StateType s : state) {
+           markState(s);
+       }
+       return this;
+   }
 
-    private BlockTags addTag(BlockTags tags) {
+    /*private BlockTags addTag(BlockTags tags) {
         if (tags.states.isEmpty()) {
             throw new IllegalArgumentException("Tag " + tags.name + " is empty when adding to " + this.name + ", you (packetevents updater) probably messed up the block tags order!!");
         }
         this.states.addAll(tags.states);
         return this;
     }
+*/
+    private BlockTags addTag(BlockTags tags) {
+        if (tags.states.isEmpty()) {
+            throw new IllegalArgumentException("Tag " + tags.name + " is empty when adding to " + this.name + ", you (packetevents updater) probably messed up the block tags order!!");
+        }
+        this.states.addAll(tags.states);
+        for (StateType s : tags.states) {
+            markState(s);
+        }
+        return this;
+    }
+
+
+    /*public boolean contains(StateType state) {
+        return this.states.contains(state);
+    }*/
 
     public boolean contains(StateType state) {
-        return this.states.contains(state);
+        int id = state.getId();
+        return id < statesArray.length && statesArray[id];
     }
+
 
     public TagKey getKey() {
         return this.name;
