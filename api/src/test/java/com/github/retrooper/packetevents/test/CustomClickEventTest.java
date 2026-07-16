@@ -39,7 +39,7 @@ public class CustomClickEventTest extends BaseDummyAPITest {
     public void testCustomClickEventPayloadSerialization() {
         // Only test if Adventure 4.22.0 is available
         if (!BackwardCompatUtil.IS_4_22_0_OR_NEWER) {
-            LOGGER.info("Skipping custom click event test - Adventure 4.22.0 required");
+          //  LOGGER.info("Skipping custom click event test - Adventure 4.22.0 required");
             return;
         }
 
@@ -127,7 +127,7 @@ public class CustomClickEventTest extends BaseDummyAPITest {
     public void testCustomClickEventWithoutPayload() {
         // Only test if Adventure 4.22.0 is available
         if (!BackwardCompatUtil.IS_4_22_0_OR_NEWER) {
-            LOGGER.info("Skipping custom click event test - Adventure 4.22.0 required");
+         //    LOGGER.info("Skipping custom click event test - Adventure 4.22.0 required");
             return;
         }
 

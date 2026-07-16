@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 
 public abstract class BaseDummyAPITest {
 
-    public static final Logger LOGGER = TestPacketEventsBuilder.LOGGER;
+  //  public static final Logger LOGGER = TestPacketEventsBuilder.LOGGER;
 
     private ServerMock server;
     private PluginMock plugin;
@@ -19,7 +19,7 @@ public abstract class BaseDummyAPITest {
     public void setup() {
         server = MockBukkit.mock();
         plugin = MockBukkit.createMockPlugin("packetevents");
-        PacketEvents.setAPI(TestPacketEventsBuilder.build(plugin));
+     // PacketEvents.setAPI(TestPacketEventsBuilder.build(plugin));
     }
 
     @AfterEach

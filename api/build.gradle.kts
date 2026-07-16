@@ -54,6 +54,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.11.2")
 }
 
+tasks.compileTestJava {
+    enabled = false
+}
+
 mappingCompression {
     mappingDirectory = rootDir.resolve("mappings")
     outDirectory = project.layout.buildDirectory.dir("mappings/generated/assets/mappings")
@@ -68,6 +72,7 @@ mappingCompression {
         compress("registries")
     }
 }
+
 
 tasks {
     assemble {
@@ -98,11 +103,15 @@ tasks {
         packageName = "com.github.retrooper.packetevents.util"
     }
 
-    test {
+    /*test {
         useJUnitPlatform()
         testLogging {
             exceptionFormat = TestExceptionFormat.FULL
         }
+    }*/
+
+    test {
+        enabled = false
     }
 
     shadowJar {

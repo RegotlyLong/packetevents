@@ -44,15 +44,17 @@ public class Vector3d {
     /**
      * X (coordinate/angle/whatever you wish)
      */
-    public final double x;
+    public double x;
     /**
      * Y (coordinate/angle/whatever you wish)
      */
-    public final double y;
+    public double y;
     /**
      * Z (coordinate/angle/whatever you wish)
      */
-    public final double z;
+    public double z;
+
+    private transient boolean mutable = false;
 
     /**
      * Default constructor setting all coordinates/angles/values to their default values (=0).
@@ -76,8 +78,60 @@ public class Vector3d {
         this.z = z;
     }
 
+    public Vector3d(double x, double y, double z,boolean a) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.mutable = a;
+    }
+
     public Vector3d(Vector3f vector) {
         this(vector.x, vector.y, vector.z);
+    }
+
+    public Vector3d setMutable(boolean mutable) {
+        this.mutable = mutable;
+        return this;
+    }
+
+    public boolean isMutable() {
+        return this.mutable;
+    }
+
+    private void checkMutable() {
+        if (!this.mutable) {
+            throw new UnsupportedOperationException("This Vector3d instance is immutable! Call setMutable(true) before modifying it.");
+        }
+    }
+
+    @RequiresMutableState
+    public Vector3d setX(double x) {
+        checkMutable();
+        this.x = x;
+        return this;
+    }
+
+    @RequiresMutableState
+    public Vector3d setY(double y) {
+        checkMutable();
+        this.y = y;
+        return this;
+    }
+
+    @RequiresMutableState
+    public Vector3d setZ(double z) {
+        checkMutable();
+        this.z = z;
+        return this;
+    }
+
+    @RequiresMutableState
+    public Vector3d set(double x, double y, double z) {
+        checkMutable();
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        return this;
     }
 
     /**

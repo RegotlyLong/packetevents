@@ -41,15 +41,17 @@ public class Vector3i {
     /**
      * X (coordinate/angle/whatever you wish)
      */
-    public final int x;
+    public int x;
     /**
      * Y (coordinate/angle/whatever you wish)
      */
-    public final int y;
+    public int y;
     /**
      * Z (coordinate/angle/whatever you wish)
      */
-    public final int z;
+    public int z;
+
+    private transient boolean mutable = false;
 
     /**
      * Default constructor setting all coordinates/angles/values to their default values (=0).
@@ -58,6 +60,62 @@ public class Vector3i {
         this.x = 0;
         this.y = 0;
         this.z = 0;
+    }
+
+    public Vector3i setMutable(boolean mutable) {
+        this.mutable = mutable;
+        return this;
+    }
+
+
+    public Vector3i(int x, int y, int z,boolean mutable) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.mutable = mutable;
+    }
+
+
+
+
+    public boolean isMutable() {
+        return this.mutable;
+    }
+
+    private void checkMutable() {
+        if (!this.mutable) {
+            throw new UnsupportedOperationException("This Vector3i instance is immutable! Call setMutable(true) before modifying it.");
+        }
+    }
+
+    @RequiresMutableState
+    public Vector3i setX(int x) {
+        checkMutable();
+        this.x = x;
+        return this;
+    }
+
+    @RequiresMutableState
+    public Vector3i setY(int y) {
+        checkMutable();
+        this.y = y;
+        return this;
+    }
+
+    @RequiresMutableState
+    public Vector3i setZ(int z) {
+        checkMutable();
+        this.z = z;
+        return this;
+    }
+
+    @RequiresMutableState
+    public Vector3i set(int x, int y, int z) {
+        checkMutable();
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        return this;
     }
 
     @Deprecated
@@ -98,6 +156,7 @@ public class Vector3i {
         this.y = y;
         this.z = z;
     }
+
 
     /**
      * Constructor allowing you to specify an array.
