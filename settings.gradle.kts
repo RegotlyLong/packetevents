@@ -30,7 +30,7 @@ include("api")
 include("netty-common")
 // Platform modules
 include("spigot")
-include("bungeecord")
+/*include("bungeecord")
 include("velocity")
 include("sponge")
 include("fabric")
@@ -42,7 +42,7 @@ include(":fabric-intermediary:mc1202")
 include(":fabric-intermediary:mc1211")
 include(":fabric-intermediary:mc1216")
 include("fabric-official")
-include(":fabric-official:mc261")
+include(":fabric-official:mc261")*/
 // Patch modules
 include(":patch:adventure-text-serializer-gson")
 include(":patch:adventure-text-serializer-legacy")
