@@ -40,11 +40,7 @@ public final class PacketEventsImplHelper {
 
         int preProcessIndex = ByteBufHelper.readerIndex(buffer);
         PacketSendEvent packetSendEvent = EventCreationUtil.createSendEvent(channel, user, player, buffer, autoProtocolTranslation);
-        int processIndex = ByteBufHelper.readerIndex(buffer);
-
-        PacketEvents.getAPI().getEventManager().callEvent(packetSendEvent, () -> {
-            ByteBufHelper.readerIndex(buffer, processIndex);
-        }, !autoProtocolTranslation);
+        PacketEvents.getAPI().getEventManager().callEvent(packetSendEvent, null, !autoProtocolTranslation);
 
         if (!packetSendEvent.isCancelled()) {
             if (packetSendEvent.getLastUsedWrapper() != null) {
@@ -77,11 +73,8 @@ public final class PacketEventsImplHelper {
 
         int preProcessIndex = ByteBufHelper.readerIndex(buffer);
         PacketReceiveEvent packetReceiveEvent = EventCreationUtil.createReceiveEvent(channel, user, player, buffer, autoProtocolTranslation);
-        int processIndex = ByteBufHelper.readerIndex(buffer);
 
-        PacketEvents.getAPI().getEventManager().callEvent(packetReceiveEvent, () -> {
-            ByteBufHelper.readerIndex(buffer, processIndex);
-        }, !autoProtocolTranslation);
+        PacketEvents.getAPI().getEventManager().callEvent(packetReceiveEvent, null, !autoProtocolTranslation);
 
         if (!packetReceiveEvent.isCancelled()) {
             if (packetReceiveEvent.getLastUsedWrapper() != null) {
