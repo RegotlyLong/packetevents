@@ -58,6 +58,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 public class User implements IRegistryHolder {
 
     private final Object channel;
