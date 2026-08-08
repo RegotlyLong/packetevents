@@ -23,6 +23,7 @@ import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.netty.buffer.ByteBufHelper;
 import com.github.retrooper.packetevents.netty.buffer.UnpooledByteBufAllocationHelper;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.item.ItemStackSerialization;
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
@@ -126,7 +127,7 @@ public final class SpigotReflectionUtil {
             GET_BUKKIT_ENTITY_METHOD, GET_LEVEL_ENTITY_GETTER_ITERABLE_METHOD, GET_ENTITY_BY_ID_LEVEL_ENTITY_GETTER_METHOD, GET_ENTITY_BY_ID_METHOD,
             CRAFT_ITEM_STACK_AS_BUKKIT_COPY, CRAFT_ITEM_STACK_AS_NMS_COPY, BUKKIT_PARTICLE_TO_NMS_ENUM_PARTICLE, NMS_ENUM_PARTICLE_TO_BUKKIT_PARTICLE,
             READ_ITEM_STACK_IN_PACKET_DATA_SERIALIZER_METHOD,
-            WRITE_ITEM_STACK_IN_PACKET_DATA_SERIALIZER_METHOD, GET_COMBINED_ID,
+            WRITE_ITEM_STACK_IN_PACKET_DATA_SERIALIZER_METHOD, ITEM_STACK_SET_DATA_METHOD, ITEM_STACK_SET_TAG_METHOD, GET_COMBINED_ID,
             GET_BY_COMBINED_ID, GET_CRAFT_BLOCK_DATA_FROM_IBLOCKDATA, PROPERTY_MAP_GET_METHOD,
             GET_DIMENSION_MANAGER, GET_DIMENSION_ID, GET_DIMENSION_KEY, CODEC_ENCODE_METHOD, DATA_RESULT_GET_METHOD,
             READ_NBT_FROM_STREAM_METHOD, WRITE_NBT_TO_STREAM_METHOD, STREAM_DECODER_DECODE, STREAM_ENCODER_ENCODE,
@@ -185,7 +186,10 @@ public final class SpigotReflectionUtil {
         GET_MOB_EFFECT_LIST_ID_METHOD = Reflection.getMethod(MOB_EFFECT_LIST_CLASS, V_1_19_OR_HIGHER ? "g" : "getId", 0);
         GET_MOB_EFFECT_LIST_BY_ID_METHOD = Reflection.getMethod(MOB_EFFECT_LIST_CLASS, V_1_19_OR_HIGHER ? "a" : "fromId", 0);
         GET_ITEM_ID_METHOD = Reflection.getMethod(NMS_ITEM_CLASS, V_1_19_OR_HIGHER ? "g" : "getId", 0);
-        GET_ITEM_BY_ID_METHOD = Reflection.getMethod(NMS_ITEM_CLASS, NMS_ITEM_CLASS, 0);
+        GET_ITEM_BY_ID_METHOD = Reflection.getMethodExact(NMS_ITEM_CLASS, "getById", NMS_ITEM_CLASS, int.class);
+        if (GET_ITEM_BY_ID_METHOD == null) {
+            GET_ITEM_BY_ID_METHOD = Reflection.getMethod(NMS_ITEM_CLASS, NMS_ITEM_CLASS, 0);
+        }
         if (V_1_17_OR_HIGHER) {
             GET_LEVEL_ENTITY_GETTER_ITERABLE_METHOD = Reflection.getMethod(LEVEL_ENTITY_GETTER_CLASS, Iterable.class, 0);
             GET_ENTITY_BY_ID_LEVEL_ENTITY_GETTER_METHOD = Reflection.getMethod(LEVEL_ENTITY_GETTER_CLASS, ENTITY_ACCESS_CLASS, 0, int.class);
@@ -228,6 +232,15 @@ public final class SpigotReflectionUtil {
         WRITE_ITEM_STACK_IN_PACKET_DATA_SERIALIZER_METHOD = Reflection.getMethodExact(NMS_PACKET_DATA_SERIALIZER_CLASS, "a", NMS_PACKET_DATA_SERIALIZER_CLASS, NMS_ITEM_STACK_CLASS);
         if (WRITE_ITEM_STACK_IN_PACKET_DATA_SERIALIZER_METHOD == null) {
             WRITE_ITEM_STACK_IN_PACKET_DATA_SERIALIZER_METHOD = Reflection.getMethod(NMS_PACKET_DATA_SERIALIZER_CLASS, 0, NMS_ITEM_STACK_CLASS);
+        }
+
+        // Used for the direct NMS ItemStack construction path on 1.8-1.12.2
+        if (VERSION.isOlderThanOrEquals(ServerVersion.V_1_12_2)) {
+            ITEM_STACK_SET_DATA_METHOD = Reflection.getMethodExact(NMS_ITEM_STACK_CLASS, "setData", void.class, int.class);
+            if (ITEM_STACK_SET_DATA_METHOD == null) {
+                ITEM_STACK_SET_DATA_METHOD = Reflection.getMethod(NMS_ITEM_STACK_CLASS, "setData", 0);
+            }
+            ITEM_STACK_SET_TAG_METHOD = Reflection.getMethodExact(NMS_ITEM_STACK_CLASS, "setTag", void.class, NMS_NBT_COMPOUND_CLASS);
         }
 
         GET_COMBINED_ID = Reflection.getMethod(BLOCK_CLASS, int.class, 0, IBLOCK_DATA_CLASS);
@@ -902,6 +915,9 @@ public final class SpigotReflectionUtil {
     }
 
     public static ItemStack encodeBukkitItemStack(com.github.retrooper.packetevents.protocol.item.ItemStack in) {
+        if (VERSION.isOlderThanOrEquals(ServerVersion.V_1_12_2)) {
+            return encodeLegacyBukkitItemStack(in);
+        }
         Object buffer = PooledByteBufAllocator.DEFAULT.buffer();
         try {
             PacketWrapper<?> wrapper = PacketWrapper.createUniversalPacketWrapper(buffer);
@@ -914,6 +930,37 @@ public final class SpigotReflectionUtil {
         } finally {
             ByteBufHelper.release(buffer);
         }
+    }
+
+    private static ItemStack encodeLegacyBukkitItemStack(com.github.retrooper.packetevents.protocol.item.ItemStack in) {
+        if (in == null || in.isEmpty()) {
+            return new ItemStack(Material.AIR);
+        }
+        // Resolve the pre-1.13 item id, deriving the base id for 1.13+ colored/block variants
+        // (e.g. gray_stained_glass_pane -> stained_glass_pane id 160)
+        int typeId = ItemStackSerialization.getLegacyItemId(in.getType(), VERSION.toClientVersion());
+        if (typeId < 0) {
+            return new ItemStack(Material.AIR);
+        }
+        Object nmsStack = createNMSItemStack(typeId, in.getAmount());
+        if (nmsStack == null) {
+            return null;
+        }
+        try {
+            if (ITEM_STACK_SET_DATA_METHOD != null) {
+                // derive the color/damage value for 1.13+ variants (e.g. gray -> 7)
+                ITEM_STACK_SET_DATA_METHOD.invoke(nmsStack, ItemStackSerialization.getLegacyItemData(in.getType(), in.getLegacyData()));
+            }
+            if (in.getNBT() != null && ITEM_STACK_SET_TAG_METHOD != null) {
+                Object nmsNbt = toMinecraftNBT(in.getNBT());
+                if (nmsNbt != null) {
+                    ITEM_STACK_SET_TAG_METHOD.invoke(nmsStack, nmsNbt);
+                }
+            }
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return toBukkitItemStack(nmsStack);
     }
 
     public static int getBlockDataCombinedId(MaterialData materialData) {

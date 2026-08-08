@@ -83,7 +83,6 @@ public class EventManager {
     public void callEvent(PacketEvent event, @Nullable Runnable postCallListenerAction, boolean preVia) {
         Object protocolBuffer = null;
         int initialReaderIndex = -1;
-
         if (event instanceof ProtocolPacketEvent) {
             protocolBuffer = ((ProtocolPacketEvent) event).getByteBuf();
             if (protocolBuffer != null) {

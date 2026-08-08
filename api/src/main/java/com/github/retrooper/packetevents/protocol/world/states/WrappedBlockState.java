@@ -261,7 +261,7 @@ public class WrappedBlockState {
     public static NBT encode(WrappedBlockState state, ClientVersion version) {
         String stateTypeStr = state.type.getMapped().getName().toString();
         WrappedBlockState defaultState;
-        if (state.getInternalData().isEmpty() || state.equals(defaultState = getDefaultState(version, state.type))) {
+        if (state.getInternalData().isEmpty() || state.equals(defaultState = getDefaultState(version, state.type,false))) {
             return new NBTString(stateTypeStr);
         }
 

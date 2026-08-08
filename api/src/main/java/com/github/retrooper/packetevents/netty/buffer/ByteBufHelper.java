@@ -5,18 +5,27 @@
 package com.github.retrooper.packetevents.netty.buffer;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.nio.charset.Charset;
 
 public class ByteBufHelper {
-    private static ByteBufOperator CACHED_OPERATOR = null;
+    private static volatile ByteBufOperator operator;
+
+    @ApiStatus.Internal
+    public static void clearOperatorCache() {
+        operator = null;
+    }
 
     private static ByteBufOperator op() {
-        if (CACHED_OPERATOR == null) {
-            CACHED_OPERATOR = PacketEvents.getAPI().getNettyManager().getByteBufOperator();
+        ByteBufOperator current = operator;
+        if (current == null) {
+            current = PacketEvents.getAPI().getNettyManager().getByteBufOperator();
+            operator = current;
         }
-        return CACHED_OPERATOR;
+        return current;
     }
+
 
     public static int capacity(Object buffer) {
         return op().capacity(buffer);
